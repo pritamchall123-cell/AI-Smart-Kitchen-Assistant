@@ -1,11 +1,16 @@
-//routes/userRoutes.js
+// routes/userRoutes.js
 
 const express = require("express");
 const router = express.Router();
-const {getUserProfile } = require("../controllers/userController");
+const {
+  getUserProfile,
+  updateUserProfile,
+  changePassword,
+} = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 
-//get /api/users/profile - protected route, "protect" runs BEFORE getUserProfile
 router.get("/profile", protect, getUserProfile);
+router.put("/profile", protect, updateUserProfile);
+router.put("/change-password", protect, changePassword);
 
 module.exports = router;

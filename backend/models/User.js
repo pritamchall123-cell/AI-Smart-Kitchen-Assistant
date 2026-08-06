@@ -27,7 +27,10 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: function(){
+        //password is required only if the user is registering via local auth (not Google)
+        return this.authProvider === "local"
+      },
       minlength: [8, "Password must be at least 8 characters"],
       select: false, // by default, password will NOT be returned in queries (extra security)
     },
@@ -38,6 +41,12 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+    authProvider: {
+      type: String,
+      enum: ["local", "google"], // only these two values are allowed
+      default: "local",
+    },
+
     avatar: {
       type: String, // will store a Cloudinary image URL later
       default: "",
@@ -46,6 +55,26 @@ const userSchema = new mongoose.Schema(
     isEmailVerified: {
       type: Boolean,
       default: false,
+    },
+
+    emailVerificationToken: {
+      type: String, 
+      select: false, //never expose this in normal queries
+    },
+
+    emailVerificationExpires: {
+      type: Date, 
+      select: false, //never expose this in normal queries
+    },
+
+    resetPasswordToken: {
+      type: String,
+      select: false, //never expose this in normal queries
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      select: false, //never expose this in normal queries
     },
 
     isPremium: {
