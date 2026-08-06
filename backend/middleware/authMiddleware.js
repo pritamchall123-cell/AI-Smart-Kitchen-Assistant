@@ -39,4 +39,14 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+// Restricts access to admin users only. Must be used AFTER `protect`,
+// since it relies on req.user already being set.
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Admins only." });
+  }
+};
+
+module.exports = { protect, adminOnly };

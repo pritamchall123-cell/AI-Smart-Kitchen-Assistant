@@ -3,6 +3,7 @@
 
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const Recipe = require("../models/Recipe");
 
 // @desc    Get logged-in user's profile
 // @route   GET /api/users/profile
@@ -93,4 +94,72 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile, updateUserProfile, changePassword };
+// @desc    Toggle favorite status of a recipe (add if not favorited, remove if already favorited)
+// @route   POST /api/users/favorites/:recipeId
+// @access  Private
+const toggleFavorite = async (req, res) => {
+  try {
+    const { recipeId } = req.params;
+
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe) {
+      return res.status(404).json({ message: "Recipe not found" });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Check if this recipe is already in the user's favorites list
+    const alreadyFavorited = user.favoriteRecipes.some(
+      (id) => id.toString() === recipeId
+    );
+
+    if (alreadyFavorited) {
+      // Remove it — keep every favorite EXCEPT this one
+      user.favoriteRecipes = user.favoriteRecipes.filter(
+        (id) => id.toString() !== recipeId
+      );
+      recipe.favoritesCount = Math.max(0, recipe.favoritesCount - 1); // never go below 0
+    } else {
+      // Add it
+      user.favoriteRecipes.push(recipeId);
+      recipe.favoritesCount += 1;
+    }
+
+    await user.save();
+    await recipe.save();
+
+    res.status(200).json({
+      message: alreadyFavorited ? "Recipe removed from favorites" : "Recipe added to favorites",
+      isFavorited: !alreadyFavorited,
+      favoritesCount: recipe.favoritesCount,
+    });
+  } catch (error) {
+    console.error("Toggle Favorite Error:", error.message);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid recipe ID" });
+    }
+
+    res.status(500).json({ message: "Server error while updating favorites" });
+  }
+};
+
+// @desc    Get all of the logged-in user's favorite recipes
+// @route   GET /api/users/favorites
+// @access  Private
+const getFavorites = async (req, res) => {
+  try {
+    // We populate the full favoriteRecipes array, turning stored IDs into full recipe data
+    const user = await User.findById(req.user._id).populate({
+      path: "favoriteRecipes",
+      populate: { path: "createdBy", select: "name avatar" },
+    });
+
+    res.status(200).json(user.favoriteRecipes);
+  } catch (error) {
+    console.error("Get Favorites Error:", error.message);
+    res.status(500).json({ message: "Server error while fetching favorites" });
+  }
+};
+
+module.exports = { getUserProfile, updateUserProfile, changePassword, toggleFavorite, getFavorites };

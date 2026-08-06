@@ -9,6 +9,8 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const recipeRoutes = require("./routes/recipeRoutes");
 
 // Connect to MongoDB
 connectDB();
@@ -25,7 +27,8 @@ app.use(cors());
 // Use the authentication routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-
+app.use("/api/categories", categoryRoutes);
+app.use("/api/recipes", recipeRoutes);
 
 // A simple test route to confirm the server is alive
 app.get("/", (req, res) => {
