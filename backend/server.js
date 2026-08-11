@@ -11,6 +11,11 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const recipeRoutes = require("./routes/recipeRoutes");
+const pantryRoutes = require("./routes/pantryRoutes");
+const groceryRoutes = require("./routes/groceryRoutes");
+const mealRoutes = require("./routes/mealRoutes");
+const nutritionRoutes = require("./routes/nutritionRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 // Connect to MongoDB
 connectDB();
@@ -29,6 +34,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/recipes", recipeRoutes);
+app.use("/api/pantry", pantryRoutes);
+app.use("/api/grocery", groceryRoutes);
+app.use("/api/meals", mealRoutes);
+app.use("/api/nutrition", nutritionRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // A simple test route to confirm the server is alive
 app.get("/", (req, res) => {
