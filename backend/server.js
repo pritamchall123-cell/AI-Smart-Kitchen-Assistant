@@ -16,6 +16,7 @@ const groceryRoutes = require("./routes/groceryRoutes");
 const mealRoutes = require("./routes/mealRoutes");
 const nutritionRoutes = require("./routes/nutritionRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 // Connect to MongoDB
 connectDB();
@@ -39,6 +40,7 @@ app.use("/api/grocery", groceryRoutes);
 app.use("/api/meals", mealRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/ai", aiRoutes);
 
 // A simple test route to confirm the server is alive
 app.get("/", (req, res) => {
@@ -51,3 +53,4 @@ const PORT = process.env.PORT || 5500;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+

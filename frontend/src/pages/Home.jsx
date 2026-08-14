@@ -27,11 +27,9 @@ function Home() {
     <div>
       {/* Hero Section */}
       <div className="bg-green-600 text-white py-16 px-8 text-center">
-        <h1 className="text-4xl font-bold mb-4">
-          Your AI-Powered Kitchen Assistant
-        </h1>
+        <h1 className="text-4xl font-bold mb-4">Welcome to AI Smart Kitchen</h1>
         <p className="text-lg text-green-100 mb-6">
-          Discover recipes, plan meals, and cook smarter.
+          Discover delicious recipes and manage your pantry with ease.
         </p>
         <Link
           to="/recipes"

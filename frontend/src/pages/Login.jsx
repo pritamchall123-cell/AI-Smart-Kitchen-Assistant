@@ -6,6 +6,7 @@ import { useDispatch } from "react-redux";
 import { setCredentials } from "../redux/authSlice";
 
 function Login() {
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -100,7 +101,7 @@ function Login() {
 
           <div className="text-right">
             <Link to="/forgot-password" className="text-sm text-green-600 hover:underline">
-              Forgot password?
+              Forgot Password?
             </Link>
           </div>
 
