@@ -17,5 +17,5 @@ Thumbs.db
 .vscode/
 
 # Uploaded files (temporary local uploads before Cloudinary)
-uploads/*
-!uploads/.gitkeep
+uploads/recipes/*
+!uploads/recipes/.gitkeep

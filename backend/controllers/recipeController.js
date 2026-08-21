@@ -20,7 +20,6 @@ const createRecipe = async (req, res) => {
     const {
       title,
       description,
-      images,
       ingredients,
       instructions,
       categories,
@@ -37,12 +36,29 @@ const createRecipe = async (req, res) => {
       tags,
     } = req.body;
 
+    // When sent as multipart/form-data (from our new frontend form),
+    // complex fields like ingredients/instructions/nutrition arrive as JSON STRINGS,
+    // not real arrays/objects — we need to parse them back.
+    if (typeof ingredients === "string") ingredients = JSON.parse(ingredients);
+    if (typeof instructions === "string") instructions = JSON.parse(instructions);
+    if (typeof nutrition === "string") nutrition = JSON.parse(nutrition);
+    if (typeof dietType === "string") dietType = JSON.parse(dietType);
+    if (typeof allergens === "string") allergens = JSON.parse(allergens);
+    if (typeof tags === "string") tags = JSON.parse(tags);
+    if (typeof categories === "string") categories = JSON.parse(categories);
+
     // Basic required-field check before even touching the database.
     // Mongoose would catch these too, but checking early gives cleaner, faster error messages.
     if (!title || !description || !ingredients || !instructions || !prepTime || !cookTime || !servings) {
       return res.status(400).json({
         message: "Please provide title, description, ingredients, instructions, prepTime, cookTime, and servings",
       });
+    }
+
+    // Build public URLs for any uploaded images (req.files comes from multer, if images were sent)
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      images = req.files.map((file) => `/uploads/recipes/${file.filename}`);
     }
 
     // Generate base slug from title

@@ -1,52 +1,353 @@
-// src/redux/authSlice.js
-// Manages authentication state: who's logged in, and login/logout actions.
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 
-import { createSlice } from "@reduxjs/toolkit";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5500/api";
 
-// On app startup, check if a user was already logged in from a previous session
-// by reading directly from localStorage — this way, refreshing the page doesn't log you out.
-const userFromStorage = localStorage.getItem("user")
-  ? JSON.parse(localStorage.getItem("user"))
-  : null;
+/*
+|--------------------------------------------------------------------------
+| Restore previous login session
+|--------------------------------------------------------------------------
+*/
 
-const tokenFromStorage = localStorage.getItem("token") || null;
+const storedUser = localStorage.getItem("user");
+const storedToken = localStorage.getItem("token");
+
+let userFromStorage = null;
+
+try {
+  userFromStorage = storedUser ? JSON.parse(storedUser) : null;
+} catch {
+  localStorage.removeItem("user");
+}
+
+/*
+|--------------------------------------------------------------------------
+| Initial State
+|--------------------------------------------------------------------------
+*/
 
 const initialState = {
   user: userFromStorage,
-  token: tokenFromStorage,
-  isAuthenticated: !!tokenFromStorage, // !! converts a value to a true/false boolean
+  token: storedToken || null,
+  isAuthenticated: Boolean(storedToken),
+
+  loading: false,
+  error: null,
+  success: false,
 };
+
+/*
+|--------------------------------------------------------------------------
+| REGISTER
+|--------------------------------------------------------------------------
+*/
+
+export const register = createAsyncThunk(
+  "auth/register",
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/auth/register`,
+        userData
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Registration failed. Please try again."
+      );
+    }
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
+| LOGIN
+|--------------------------------------------------------------------------
+*/
+
+export const login = createAsyncThunk(
+  "auth/login",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/auth/login`,
+        credentials
+      );
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          "Login failed. Please check your credentials."
+      );
+    }
+  }
+);
+
+/*
+|--------------------------------------------------------------------------
+| AUTH SLICE
+|--------------------------------------------------------------------------
+*/
 
 const authSlice = createSlice({
   name: "auth",
+
   initialState,
+
   reducers: {
-    // Called after successful login or register
+    /*
+    |--------------------------------------------------------------------------
+    | SET CREDENTIALS
+    |--------------------------------------------------------------------------
+    */
+
     setCredentials: (state, action) => {
       const { user, token } = action.payload;
+
       state.user = user;
       state.token = token;
-      state.isAuthenticated = true;
+      state.isAuthenticated = Boolean(token);
 
-      // Keep localStorage in sync, so refreshing the page still remembers the login
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
+      state.error = null;
+      state.success = true;
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      if (token) {
+        localStorage.setItem("token", token);
+      }
     },
 
-    // Called on logout
+    /*
+    |--------------------------------------------------------------------------
+    | LOGOUT
+    |--------------------------------------------------------------------------
+    */
+
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
 
+      state.loading = false;
+      state.error = null;
+      state.success = false;
+
       localStorage.removeItem("user");
       localStorage.removeItem("token");
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLEAR ERROR
+    |--------------------------------------------------------------------------
+    */
+
+    clearAuthError: (state) => {
+      state.error = null;
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLEAR SUCCESS
+    |--------------------------------------------------------------------------
+    */
+
+    clearAuthSuccess: (state) => {
+      state.success = false;
+    },
+  },
+
+  /*
+  |--------------------------------------------------------------------------
+  | ASYNC ACTIONS
+  |--------------------------------------------------------------------------
+  */
+
+  extraReducers: (builder) => {
+    /*
+    |--------------------------------------------------------------------------
+    | REGISTER
+    |--------------------------------------------------------------------------
+    */
+
+    builder
+      .addCase(register.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+
+      .addCase(register.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.success = true;
+
+        /*
+        Backend returns:
+
+        {
+          _id,
+          name,
+          email,
+          role,
+          isEmailVerified,
+          token,
+          message
+        }
+
+        Therefore we create the user object ourselves.
+        */
+
+        const {
+          _id,
+          name,
+          email,
+          role,
+          isEmailVerified,
+          token,
+        } = action.payload;
+
+        const user = {
+          _id,
+          name,
+          email,
+          role,
+          isEmailVerified,
+        };
+
+        state.user = user;
+
+        if (token) {
+          state.token = token;
+          state.isAuthenticated = true;
+
+          localStorage.setItem("token", token);
+        }
+
+        localStorage.setItem("user", JSON.stringify(user));
+      })
+
+      .addCase(register.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.error =
+          action.payload || "Registration failed.";
+      });
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN
+    |--------------------------------------------------------------------------
+    */
+
+    builder
+      .addCase(login.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+
+      .addCase(login.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.success = true;
+
+        /*
+        Backend returns:
+
+        {
+          _id,
+          name,
+          email,
+          role,
+          isEmailVerified,
+          token
+        }
+        */
+
+        const {
+          _id,
+          name,
+          email,
+          role,
+          isEmailVerified,
+          token,
+          avatar,
+        } = action.payload;
+
+        const user = {
+          _id,
+          name,
+          email,
+          role,
+          isEmailVerified,
+          avatar,
+        };
+
+        state.user = user;
+
+        if (token) {
+          state.token = token;
+          state.isAuthenticated = true;
+
+          localStorage.setItem("token", token);
+        }
+
+        localStorage.setItem("user", JSON.stringify(user));
+      })
+
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.error =
+          action.payload || "Login failed.";
+      });
   },
 });
 
-// Export the actions so components can trigger them
-export const { setCredentials, logout } = authSlice.actions;
+/*
+|--------------------------------------------------------------------------
+| ACTIONS
+|--------------------------------------------------------------------------
+*/
 
-// Export the reducer so the store can use it
+export const {
+  setCredentials,
+  logout,
+  clearAuthError,
+  clearAuthSuccess,
+} = authSlice.actions;
+
+/*
+|--------------------------------------------------------------------------
+| SELECTORS
+|--------------------------------------------------------------------------
+*/
+
+export const selectUser = (state) => state.auth.user;
+
+export const selectToken = (state) => state.auth.token;
+
+export const selectIsAuthenticated = (state) =>
+  state.auth.isAuthenticated;
+
+export const selectAuthLoading = (state) =>
+  state.auth.loading;
+
+export const selectAuthError = (state) =>
+  state.auth.error;
+
+/*
+|--------------------------------------------------------------------------
+| REDUCER
+|--------------------------------------------------------------------------
+*/
+
 export default authSlice.reducer;

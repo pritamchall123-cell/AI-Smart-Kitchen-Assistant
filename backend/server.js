@@ -17,6 +17,9 @@ const mealRoutes = require("./routes/mealRoutes");
 const nutritionRoutes = require("./routes/nutritionRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const communityRoutes = require("./routes/communityRoutes");
+const path = require("path");
 
 // Connect to MongoDB
 connectDB();
@@ -27,8 +30,16 @@ const app = express();
 // Middleware: allows our server to accept and understand JSON data in requests
 app.use(express.json());
 
-// Middleware: allows our frontend (different URL/port) to communicate with this backend
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    process.env.CLIENT_URL, // will be set to your deployed frontend URL on Render
+  ],
+  credentials: true,
+}));
+
+// Serve uploaded images as static files, e.g. http://localhost:5500/uploads/recipes/filename.jpg
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Use the authentication routes
 app.use("/api/auth", authRoutes);
@@ -41,6 +52,9 @@ app.use("/api/meals", mealRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/admin",adminRoutes);
+app.use("/api/community", communityRoutes);
+
 
 // A simple test route to confirm the server is alive
 app.get("/", (req, res) => {

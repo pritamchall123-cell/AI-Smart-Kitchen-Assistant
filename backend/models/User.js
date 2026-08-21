@@ -99,6 +99,20 @@ const userSchema = new mongoose.Schema(
         ref: "Recipe", // tells Mongoose this ID points to the Recipe model
       },
     ],
+
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true, // automatically adds createdAt and updatedAt fields
